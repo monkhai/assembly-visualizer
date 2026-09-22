@@ -147,17 +147,6 @@ impl Lexer {
 mod tests {
     use super::*;
     use crate::ast::*;
-    #[test]
-    fn test_comma() {
-        let code = "sp, sp,";
-
-        let mut lexer = Lexer::new(code.to_owned());
-
-        let mut token = lexer.next_token();
-        assert_eq!(token, Token::Sp);
-        token = lexer.next_token();
-        assert_eq!(token, Token::Comma);
-    }
 
     #[test]
     fn test_next_token() {
@@ -165,7 +154,7 @@ mod tests {
           _main:
             sub sp, sp, #16
             str x30, [sp]
-            mov w0, #21
+            mov w0, #42
             ldr x30, [sp]
             add sp, sp, #16
             ret
@@ -194,7 +183,7 @@ mod tests {
                 width: Width::W32,
             }),
             Token::Comma,
-            Token::Int(21),
+            Token::Int(42),
             //
             Token::Instruction(Instruction::Ldr),
             Token::X30,
