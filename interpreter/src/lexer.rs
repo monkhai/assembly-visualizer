@@ -1,4 +1,4 @@
-use crate::ast::{
+use crate::token::{
     Register,
     Token::{self},
     Width, keyword_token,
@@ -146,7 +146,7 @@ impl Lexer {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::ast::*;
+    use crate::token::*;
 
     #[test]
     fn test_next_token() {
