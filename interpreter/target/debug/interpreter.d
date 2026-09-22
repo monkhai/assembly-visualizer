@@ -1,1 +1,0 @@
-/Users/yohaiwiener/Developer/monkhai/assembly/interpreter/target/debug/interpreter: /Users/yohaiwiener/Developer/monkhai/assembly/interpreter/src/ast.rs /Users/yohaiwiener/Developer/monkhai/assembly/interpreter/src/lexer.rs /Users/yohaiwiener/Developer/monkhai/assembly/interpreter/src/lib.rs /Users/yohaiwiener/Developer/monkhai/assembly/interpreter/src/main.rs
