@@ -42,6 +42,7 @@ pub fn keyword_token(word: &str) -> Option<Token> {
     match word {
         "ret" => Some(Token::Ret),
         "sp" => Some(Token::Sp),
+        "x30" => Some(Token::X30),
 
         // instructions
         "mov" => Some(Token::Instruction(Instruction::Mov)),
