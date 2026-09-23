@@ -1,3 +1,5 @@
+use std::panic;
+
 use crate::token::{
     Register,
     Token::{self},
@@ -132,7 +134,16 @@ impl Lexer {
             Some(char) => panic!("invalid register width: {char}"),
         };
 
-        let register = Register { number: 0, width };
+        let number_chars = &word[1..];
+        let number = number_chars
+            .parse::<i8>()
+            .expect("this to be a valid number doggo");
+
+        if number > 29 || number < 0 {
+            panic!("incorrect range value {number}")
+        }
+
+        let register = Register { number, width };
         Token::Register(register)
     }
 
@@ -204,7 +215,7 @@ mod tests {
         let mut lexer = Lexer::new(code.to_owned());
         for test in tests {
             let t = lexer.next_token();
-            println!("got {:#?} for {:#?}", t, test);
+            println!("got {:?} for {:?}", t, test);
             assert_eq!(t, test);
         }
     }
