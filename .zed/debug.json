@@ -1,0 +1,30 @@
+[
+    {
+        "label": "Build & Debug interpreter",
+        "adapter": "CodeLLDB",
+        "request": "launch",
+        "terminal": "console",
+        "build": {
+            "command": "cargo",
+            "args": ["build", "--manifest-path", "interpreter/Cargo.toml"]
+        },
+        "program": "$ZED_WORKTREE_ROOT/interpreter/target/debug/assembly-interpreter",
+        "sourceLanguages": ["rust"]
+    },
+    {
+        "label": "Debug lexer test",
+        "adapter": "CodeLLDB",
+        "terminal": "console",
+        "build": {
+            "command": "cargo",
+            "args": [
+                "test",
+                "--manifest-path",
+                "interpreter/Cargo.toml",
+                "--lib",
+                "test_next_token"
+            ]
+        },
+        "sourceLanguages": ["rust"]
+    }
+]
