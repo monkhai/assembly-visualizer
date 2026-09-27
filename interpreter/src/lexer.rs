@@ -32,16 +32,14 @@ impl Lexer {
 
         let token = match self.current_char {
             None => Token::Eof,
+            Some(0) => Token::Eof,
             Some(b',') => Token::Comma,
             Some(b'[') => Token::LBracket,
             Some(b']') => Token::RBracket,
-            Some(b'x' | b'w') => {
-                return self.read_register();
-            }
 
             Some(byte) if byte == b'#' => {
                 self.read_char(); // skip the #
-                self.read_number()
+                return self.read_number();
             }
 
             Some(byte) if byte.is_ascii_alphanumeric() || byte == b'_' || byte == b':' => {
@@ -69,12 +67,13 @@ impl Lexer {
         let start = self.position;
         while matches!(
           self.current_char,
-          Some(byte) if byte.is_ascii_digit()
+          Some(byte) if byte.is_ascii_digit() || byte.is_ascii_hexdigit() || byte == b'x',
         ) {
             self.read_char();
         }
 
         let text = &self.code[start..self.position];
+
         let value = if let Some(hex) = text.strip_prefix("0x") {
             i64::from_str_radix(hex, 16).expect("conversion to work")
         } else {
@@ -100,51 +99,14 @@ impl Lexer {
                 if word.ends_with(":") {
                     let sanitized = word.strip_suffix(":").expect("to strip that shit");
                     return Token::Label(sanitized.to_owned());
+                } else if let Some(register) = is_register(word) {
+                    return register;
                 }
+
                 return Token::Label(word.to_owned());
             }
         };
         return token;
-    }
-
-    fn read_register(&mut self) -> Token {
-        let start = self.position;
-        while matches!(self.current_char, Some(b'x' | b'w' | b'0'..=b'9')) {
-            self.read_char();
-        }
-
-        let length = self.position - start;
-        if length < 2 || length > 3 {
-            panic!(
-                "someone submitted a register with the wrong length! {:?}",
-                self.position - start
-            )
-        }
-
-        let word = &self.code[start..self.position];
-        if word == "x30" {
-            return Token::X30;
-        };
-
-        let width_char = word.chars().next();
-        let width = match width_char {
-            None => panic!("the fuck you mean we don't have a first word?"),
-            Some('x') => Width::X64,
-            Some('w') => Width::W32,
-            Some(char) => panic!("invalid register width: {char}"),
-        };
-
-        let number_chars = &word[1..];
-        let number = number_chars
-            .parse::<i8>()
-            .expect("this to be a valid number doggo");
-
-        if number > 29 || number < 0 {
-            panic!("incorrect range value {number}")
-        }
-
-        let register = Register { number, width };
-        Token::Register(register)
     }
 
     fn skip_whitespace(&mut self) {
@@ -154,10 +116,72 @@ impl Lexer {
     }
 }
 
+fn is_register(word: &str) -> Option<Token> {
+    if word.len() > 3 {
+        return None;
+    }
+
+    let width_char = word.chars().next();
+    let width = match width_char {
+        None => panic!("the fuck you mean we don't have a first word?"),
+        Some('x') => Width::X64,
+        Some('w') => Width::W32,
+        Some(_) => return None,
+    };
+
+    let number_chars = &word[1..];
+    let number = number_chars
+        .parse::<i8>()
+        .expect("this to be a valid number doggo");
+
+    if number == 30 {
+        return Some(Token::X30);
+    }
+
+    if number > 29 || number < 0 {
+        panic!("incorrect range value {number}")
+    }
+    let register = Register { number, width };
+    Some(Token::Register(register))
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
     use crate::token::*;
+
+    #[test]
+    fn empty_input_returns_eof() {
+        assert_eq!(Lexer::new("".into()).next_token(), Token::Eof);
+    }
+
+    #[test]
+    fn reads_hex_immediate() {
+        assert_eq!(Lexer::new("#0x1".into()).next_token(), Token::Int(1));
+    }
+
+    #[test]
+    fn preserves_punctuation_after_number() {
+        let mut lexer = Lexer::new("#1,]".into());
+        assert_eq!(lexer.next_token(), Token::Int(1));
+        assert_eq!(lexer.next_token(), Token::Comma);
+    }
+
+    #[test]
+    fn reads_w_prefixed_label() {
+        assert_eq!(
+            Lexer::new("work:".into()).next_token(),
+            Token::Label("work".into())
+        );
+    }
+
+    #[test]
+    fn reads_x_prefixed_label() {
+        assert_eq!(
+            Lexer::new("xyz:".into()).next_token(),
+            Token::Label("xyz".into())
+        );
+    }
 
     #[test]
     fn test_next_token() {
@@ -210,12 +234,12 @@ mod tests {
             Token::Comma,
             Token::Int(16),
             Token::Ret,
+            Token::Eof,
         ];
 
         let mut lexer = Lexer::new(code.to_owned());
         for test in tests {
             let t = lexer.next_token();
-            println!("got {:?} for {:?}", t, test);
             assert_eq!(t, test);
         }
     }

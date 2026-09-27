@@ -12,18 +12,13 @@
         "sourceLanguages": ["rust"]
     },
     {
-        "label": "Debug lexer test",
+        "label": "Debug all tests",
         "adapter": "CodeLLDB",
         "terminal": "console",
         "build": {
             "command": "cargo",
-            "args": [
-                "test",
-                "--manifest-path",
-                "interpreter/Cargo.toml",
-                "--lib",
-                "test_next_token"
-            ]
+            "args": ["test", "--lib", "--no-run"],
+            "cwd": "$ZED_WORKTREE_ROOT/interpreter"
         },
         "sourceLanguages": ["rust"]
     }
