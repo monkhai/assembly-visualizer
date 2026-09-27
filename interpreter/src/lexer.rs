@@ -197,21 +197,21 @@ mod tests {
         let tests = vec![
             Token::LabelDef("_main:".to_owned()),
             //
-            Token::Instruction(Opcode::Sub),
+            Token::Opcode(Opcode::Sub),
             Token::Sp,
             Token::Comma,
             Token::Sp,
             Token::Comma,
             Token::Int(16),
             //
-            Token::Instruction(Opcode::Str),
+            Token::Opcode(Opcode::Str),
             Token::X30,
             Token::Comma,
             Token::LBracket,
             Token::Sp,
             Token::RBracket,
             //
-            Token::Instruction(Opcode::Mov),
+            Token::Opcode(Opcode::Mov),
             Token::Register(Register {
                 number: 0,
                 width: Width::W32,
@@ -219,14 +219,14 @@ mod tests {
             Token::Comma,
             Token::Int(42),
             //
-            Token::Instruction(Opcode::Ldr),
+            Token::Opcode(Opcode::Ldr),
             Token::X30,
             Token::Comma,
             Token::LBracket,
             Token::Sp,
             Token::RBracket,
             //
-            Token::Instruction(Opcode::Add),
+            Token::Opcode(Opcode::Add),
             Token::Sp,
             Token::Comma,
             Token::Sp,
