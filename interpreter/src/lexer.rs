@@ -1,6 +1,6 @@
 use std::panic;
 
-use crate::token::{
+use crate::ast::{
     Register,
     Token::{self},
     Width, keyword_token,
@@ -97,8 +97,7 @@ impl Lexer {
             Some(token) => token,
             None => {
                 if word.ends_with(":") {
-                    let sanitized = word.strip_suffix(":").expect("to strip that shit");
-                    return Token::Label(sanitized.to_owned());
+                    return Token::LabelDef(word.to_owned());
                 } else if let Some(register) = is_register(word) {
                     return register;
                 }
@@ -148,7 +147,7 @@ fn is_register(word: &str) -> Option<Token> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::token::*;
+    use crate::ast::*;
 
     #[test]
     fn empty_input_returns_eof() {
@@ -171,7 +170,7 @@ mod tests {
     fn reads_w_prefixed_label() {
         assert_eq!(
             Lexer::new("work:".into()).next_token(),
-            Token::Label("work".into())
+            Token::LabelDef("work:".into())
         );
     }
 
@@ -179,7 +178,7 @@ mod tests {
     fn reads_x_prefixed_label() {
         assert_eq!(
             Lexer::new("xyz:".into()).next_token(),
-            Token::Label("xyz".into())
+            Token::LabelDef("xyz:".into())
         );
     }
 
@@ -196,23 +195,23 @@ mod tests {
           ";
 
         let tests = vec![
-            Token::Label("_main".to_owned()),
+            Token::LabelDef("_main:".to_owned()),
             //
-            Token::Instruction(Instruction::Sub),
+            Token::Instruction(Opcode::Sub),
             Token::Sp,
             Token::Comma,
             Token::Sp,
             Token::Comma,
             Token::Int(16),
             //
-            Token::Instruction(Instruction::Str),
+            Token::Instruction(Opcode::Str),
             Token::X30,
             Token::Comma,
             Token::LBracket,
             Token::Sp,
             Token::RBracket,
             //
-            Token::Instruction(Instruction::Mov),
+            Token::Instruction(Opcode::Mov),
             Token::Register(Register {
                 number: 0,
                 width: Width::W32,
@@ -220,14 +219,14 @@ mod tests {
             Token::Comma,
             Token::Int(42),
             //
-            Token::Instruction(Instruction::Ldr),
+            Token::Instruction(Opcode::Ldr),
             Token::X30,
             Token::Comma,
             Token::LBracket,
             Token::Sp,
             Token::RBracket,
             //
-            Token::Instruction(Instruction::Add),
+            Token::Instruction(Opcode::Add),
             Token::Sp,
             Token::Comma,
             Token::Sp,
