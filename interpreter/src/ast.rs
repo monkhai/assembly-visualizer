@@ -1,28 +1,39 @@
-pub struct Immediate(i64);
-
-pub struct MemoryAddress {
-    pub base: Register,
-    pub offset: i64,
+pub struct Program {
+    pub instructions: Vec<Instruction>,
 }
 
+#[derive(Debug, PartialEq)]
+pub struct MemoryAddress {
+    pub base: RegisterOrSp,
+    pub offset: Option<i64>,
+}
+
+#[derive(Debug, PartialEq)]
 pub enum RegisterOrImmediate {
     Register(Register),
-    Immediate(Immediate),
+    Immediate(i64),
 }
 
+#[derive(Debug, PartialEq)]
+pub enum RegisterOrSp {
+    Register(Register),
+    Sp,
+}
+
+#[derive(Debug, PartialEq)]
 pub enum Instruction {
     Mov {
         destination: Register,
         source: RegisterOrImmediate,
     },
     Add {
-        destination: Register,
-        first_source: Register,
+        destination: RegisterOrSp,
+        first_source: RegisterOrSp,
         second_source: RegisterOrImmediate,
     },
     Sub {
-        destination: Register,
-        first_source: Register,
+        destination: RegisterOrSp,
+        first_source: RegisterOrSp,
         second_source: RegisterOrImmediate,
     },
     Str {
@@ -33,6 +44,7 @@ pub enum Instruction {
         destination: Register,
         address: MemoryAddress,
     },
+    Ret,
 }
 
 #[derive(Debug, PartialEq)]
@@ -42,6 +54,7 @@ pub enum Opcode {
     Sub,
     Str,
     Ldr,
+    Ret,
 }
 
 #[derive(Debug, PartialEq)]
@@ -63,14 +76,11 @@ pub enum Token {
 
     Opcode(Opcode),
     Sp,
-    X30,
 
     Comma,
     LBracket,
     RBracket,
     Eof,
-
-    Ret,
 
     Int(i64),
     Register(Register),
@@ -78,9 +88,7 @@ pub enum Token {
 
 pub fn keyword_token(word: &str) -> Option<Token> {
     match word {
-        "ret" => Some(Token::Ret),
         "sp" => Some(Token::Sp),
-        "x30" => Some(Token::X30),
 
         // instructions
         "mov" => Some(Token::Opcode(Opcode::Mov)),
@@ -88,6 +96,7 @@ pub fn keyword_token(word: &str) -> Option<Token> {
         "sub" => Some(Token::Opcode(Opcode::Sub)),
         "str" => Some(Token::Opcode(Opcode::Str)),
         "ldr" => Some(Token::Opcode(Opcode::Ldr)),
+        "ret" => Some(Token::Opcode(Opcode::Ret)),
 
         _ => None,
     }

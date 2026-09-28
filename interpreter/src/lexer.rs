@@ -115,6 +115,18 @@ impl Lexer {
     }
 }
 
+impl Iterator for Lexer {
+    type Item = Token;
+
+    fn next(&mut self) -> Option<Token> {
+        let token = self.next_token();
+        if token == Token::Eof {
+            return None;
+        }
+        Some(token)
+    }
+}
+
 fn is_register(word: &str) -> Option<Token> {
     if word.len() > 3 {
         return None;
@@ -133,11 +145,7 @@ fn is_register(word: &str) -> Option<Token> {
         .parse::<i8>()
         .expect("this to be a valid number doggo");
 
-    if number == 30 {
-        return Some(Token::X30);
-    }
-
-    if number > 29 || number < 0 {
+    if number > 30 || number < 0 {
         panic!("incorrect range value {number}")
     }
     let register = Register { number, width };
@@ -205,7 +213,10 @@ mod tests {
             Token::Int(16),
             //
             Token::Opcode(Opcode::Str),
-            Token::X30,
+            Token::Register(Register {
+                number: 30,
+                width: Width::X64,
+            }),
             Token::Comma,
             Token::LBracket,
             Token::Sp,
@@ -220,7 +231,10 @@ mod tests {
             Token::Int(42),
             //
             Token::Opcode(Opcode::Ldr),
-            Token::X30,
+            Token::Register(Register {
+                number: 30,
+                width: Width::X64,
+            }),
             Token::Comma,
             Token::LBracket,
             Token::Sp,
@@ -232,7 +246,7 @@ mod tests {
             Token::Sp,
             Token::Comma,
             Token::Int(16),
-            Token::Ret,
+            Token::Opcode(Opcode::Ret),
             Token::Eof,
         ];
 
