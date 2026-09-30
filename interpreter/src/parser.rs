@@ -1,11 +1,17 @@
+use std::collections::HashMap;
+
 use crate::{
     ast::{
-        Instruction, MemoryAddress, Opcode, Program, Register,
-        RegisterOrImmediate::{self, Immediate},
-        RegisterOrSp,
+        Opcode, Register,
         Token::{self},
     },
+    instruction::{
+        Instruction, MemoryAddress,
+        RegisterOrImmediate::{self, Immediate},
+        RegisterOrSp,
+    },
     lexer::Lexer,
+    program::Program,
 };
 
 pub struct Parser {
@@ -17,6 +23,7 @@ impl Parser {
     pub fn new(lexer: Lexer) -> Self {
         let program = Program {
             instructions: vec![],
+            label_map: HashMap::new(),
         };
         Self { lexer, program }
     }
@@ -34,7 +41,6 @@ impl Parser {
     }
 
     fn read_instruction(&mut self, opcode: Opcode) -> Result<(), &'static str> {
-        println!("instruction: {:?}", opcode);
         match opcode {
             Opcode::Mov => {
                 let destination = self.read_register()?;
@@ -76,12 +82,12 @@ impl Parser {
             }
 
             Opcode::Str => {
-                let value = self.read_register()?;
+                let register = self.read_register()?;
                 self.read_comma()?;
                 let address = self.read_address()?;
                 self.program
                     .instructions
-                    .push(Instruction::Str { value, address });
+                    .push(Instruction::Str { register, address });
             }
 
             Opcode::Ldr => {
@@ -158,17 +164,22 @@ impl Parser {
     }
 
     fn handle_label_def(&mut self, def: String) {
-        println!("def: {def}");
+        self.program
+            .label_map
+            .insert(def, self.program.instructions.len());
     }
 }
 
 #[cfg(test)]
 mod tests {
+    use crate::instruction::{Instruction, RegisterOrImmediate::Immediate};
+
     use super::*;
 
     #[test]
     fn get_correct_instructions() {
         let code = "
+          _main:
             sub sp, sp, #16
             str x30, [sp]
             mov w0, #42
@@ -176,14 +187,14 @@ mod tests {
             add sp, sp, #16
             ret
           ";
-        let expected = vec![
+        let expected_instructions = vec![
             Instruction::Sub {
                 destination: RegisterOrSp::Sp,
                 first_source: RegisterOrSp::Sp,
                 second_source: Immediate(16),
             },
             Instruction::Str {
-                value: Register {
+                register: Register {
                     number: 30,
                     width: crate::ast::Width::X64,
                 },
@@ -217,13 +228,16 @@ mod tests {
             Instruction::Ret,
         ];
 
+        let expected_map = HashMap::from([("_main".to_owned(), 0)]);
+
         let lexer = Lexer::new(code.to_owned());
         let parser = Parser::new(lexer);
         let program = parser.parse().expect("valid program");
-        assert_eq!(program.instructions.len(), expected.len());
-        for (instruction, test) in program.instructions.iter().zip(expected) {
-            println!("instruction: {:?} for test: {:?}", instruction, test);
+        assert_eq!(program.instructions.len(), expected_instructions.len());
+        for (instruction, test) in program.instructions.iter().zip(expected_instructions) {
             assert_eq!(instruction, &test);
         }
+
+        assert_eq!(program.label_map, expected_map);
     }
 }

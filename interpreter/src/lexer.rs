@@ -97,7 +97,9 @@ impl Lexer {
             Some(token) => token,
             None => {
                 if word.ends_with(":") {
-                    return Token::LabelDef(word.to_owned());
+                    return Token::LabelDef(
+                        word.strip_suffix(":").expect("to have : suffix").to_owned(),
+                    );
                 } else if let Some(register) = is_register(word) {
                     return register;
                 }
@@ -142,10 +144,10 @@ fn is_register(word: &str) -> Option<Token> {
 
     let number_chars = &word[1..];
     let number = number_chars
-        .parse::<i8>()
+        .parse::<u8>()
         .expect("this to be a valid number doggo");
 
-    if number > 30 || number < 0 {
+    if number > 30 {
         panic!("incorrect range value {number}")
     }
     let register = Register { number, width };
@@ -178,7 +180,7 @@ mod tests {
     fn reads_w_prefixed_label() {
         assert_eq!(
             Lexer::new("work:".into()).next_token(),
-            Token::LabelDef("work:".into())
+            Token::LabelDef("work".into())
         );
     }
 
@@ -186,7 +188,7 @@ mod tests {
     fn reads_x_prefixed_label() {
         assert_eq!(
             Lexer::new("xyz:".into()).next_token(),
-            Token::LabelDef("xyz:".into())
+            Token::LabelDef("xyz".into())
         );
     }
 
@@ -203,7 +205,7 @@ mod tests {
           ";
 
         let tests = vec![
-            Token::LabelDef("_main:".to_owned()),
+            Token::LabelDef("_main".to_owned()),
             //
             Token::Opcode(Opcode::Sub),
             Token::Sp,
